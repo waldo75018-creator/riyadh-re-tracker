@@ -1,0 +1,62 @@
+name: Refresh Riyadh RE tracker
+
+on:
+  schedule:
+    - cron: '0 * * * *'        # hourly, on the hour (UTC)
+  workflow_dispatch:            # allow manual runs from the Actions tab
+
+permissions:
+  contents: write               # let the job commit refreshed data back
+
+concurrency:
+  group: tracker-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install --quiet pandas
+
+      - name: Collect newest raw-land plots (SREM)
+        run: python _tracker_build/collect_land.py || echo "land collect failed; continuing with existing data"
+
+      - name: Rebuild dashboard
+        run: python _tracker_build/build_tracker.py
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
+        run: |
+          set -e
+          F=riyadh-real-estate-tracker.html
+          SITE=ad0b6dda-b6fb-45d5-adfe-1ebb8afaef6f
+          SHA=$(sha1sum "$F" | cut -d' ' -f1)
+          DID=$(curl -s -X POST "https://api.netlify.com/api/v1/sites/$SITE/deploys" \
+            -H "Authorization: Bearer $NETLIFY_TOKEN" -H "Content-Type: application/json" \
+            -d "{\"files\": {\"/index.html\": \"$SHA\"}}" \
+            | python3 -c "import sys,json;print(json.load(sys.stdin)['id'])")
+          curl -s -X PUT "https://api.netlify.com/api/v1/deploys/$DID/files/index.html" \
+            -H "Authorization: Bearer $NETLIFY_TOKEN" -H "Content-Type: application/octet-stream" \
+            --data-binary "@$F" >/dev/null
+          sleep 8
+          CODE=$(curl -s -o /dev/null -w "%{http_code} %{content_type}" "https://riyadh-capital-circle-tracker.netlify.app/")
+          echo "live: $CODE"
+          case "$CODE" in 200*) echo "deploy OK";; *) echo "deploy check failed"; exit 1;; esac
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "rcc-tracker-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Hourly tracker refresh $(date -u +%Y-%m-%dT%H:%MZ)" || echo "no changes to commit"
+          git push

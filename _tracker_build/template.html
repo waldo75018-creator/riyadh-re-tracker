@@ -1,0 +1,216 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riyadh Real Estate Price Tracker</title><style>
+:root{--green:#0f7a4d;--gold:#d4a017;--panel:#13201a;--panel2:#182a22;--line:#23362c;--txt:#e8f0ea;--mut:#8fa899;--live:#3ddc84}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0c1410,#0a110d);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:22px 20px 60px}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--line);padding-bottom:14px}
+h1{font-size:21px;margin:0 0 3px}.sub{color:var(--mut);font-size:12.5px}.asof{text-align:right;font-size:12px;color:var(--mut)}.asof b{color:var(--gold)}
+h2.sec{font-size:15px;margin:26px 0 4px}.secsub{color:var(--mut);font-size:12px;margin-bottom:12px}
+.feat{background:linear-gradient(135deg,#10241a,#0e1c16);border:1px solid #1f5a3e;border-radius:14px;padding:18px;margin-top:18px}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--live);font-weight:600;margin-bottom:6px}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(61,220,132,.6);animation:p 1.8s infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(61,220,132,.5)}70%{box-shadow:0 0 0 7px rgba(61,220,132,0)}100%{box-shadow:0 0 0 0 rgba(61,220,132,0)}}
+.tabs{display:flex;gap:8px;margin:18px 0 14px}
+.tabs button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--mut);padding:12px;border-radius:11px;cursor:pointer;font-size:15px;font-weight:600}
+.tabs button .ar{display:block;font-size:12px;font-weight:400;color:var(--mut);margin-top:2px;direction:rtl}
+.tabs button.on{background:linear-gradient(135deg,var(--green),#0b5e3b);color:#fff;border-color:var(--green)}.tabs button.on .ar{color:#bfe6d2}
+.summary{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:var(--mut);margin:0 2px 14px}.summary b{color:var(--txt);font-size:16px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#13201a99;border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:16px}
+.controls label{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:4px}
+select,input[type=number]{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;min-width:130px}
+.ck{flex-direction:row !important;align-items:center;gap:6px !important;margin-top:14px;cursor:pointer}
+.layout{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+svg.riy{cursor:grab;width:100%;height:auto;display:block;background:radial-gradient(circle at 52% 42%,#0f1d16,#0a100d);border-radius:12px;border:1px solid var(--line)}
+.geobase{fill:#15241c;fill-opacity:.5;stroke:#22332a;stroke-width:.3;pointer-events:none}
+.dz{stroke:#0b120e;stroke-width:.4;fill-opacity:.92;cursor:pointer;transition:fill-opacity .12s}
+.dz:hover{fill-opacity:1;stroke:#ffd86b;stroke-width:1.4}
+.selz{stroke:#ffd86b;stroke-width:1.9;fill-opacity:1}
+.compass{font-size:11px;fill:#5c7567;font-weight:700}
+#mtip{position:fixed;z-index:50;display:none;pointer-events:none;background:#0c1712f2;border:1px solid #2f4a3a;border-radius:9px;padding:8px 11px;font-size:12px;color:var(--txt);box-shadow:0 8px 24px #000a;max-width:210px}
+#mtip .tn{font-weight:600;margin-bottom:3px}#mtip .tv{color:var(--gold);font-weight:600}#mtip .tc{color:var(--mut);font-size:11px;margin-top:2px}#mtip .rtl{color:var(--mut);font-size:11px;font-weight:400}
+.legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut);margin-top:8px;flex-wrap:wrap}.legbar{height:10px;width:120px;border-radius:5px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}.panel .ph{padding:8px 12px;font-size:11px;color:var(--mut);border-bottom:1px solid var(--line);background:var(--panel2)}
+.scroll{max-height:470px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}th{color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;position:sticky;top:0;background:var(--panel2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}tbody tr{cursor:pointer}tbody tr:hover{background:#16261d}tbody tr.sel{background:#193a28}.rtl{direction:rtl}
+.idxcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.cap{font-size:11px;color:var(--mut);margin:2px 2px 8px;line-height:1.5}.cap b{color:#e7c768}
+.tagline{display:inline-block;font-size:11px;color:#1a2a1f;background:var(--gold);font-weight:700;border-radius:6px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.chip{border:1px solid var(--line);background:var(--panel2);color:var(--mut);border-radius:20px;padding:6px 13px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.chip .dot{width:9px;height:9px;border-radius:50%}.chip.on{color:#fff;border-color:#3a5446;background:#1d3327}
+.note{background:#1a2a1f;border:1px solid var(--line);border-left:3px solid var(--gold);padding:11px 14px;border-radius:8px;font-size:12px;color:#cfe0d6;margin-top:16px;line-height:1.55}
+a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<header class="top"><div><h1>Riyadh Real Estate Price Tracker</h1>
+<div class="sub">Raw-land live feed (SREM) · district prices (MOJ) · price index by type (GASTAT) · real district boundaries</div></div>
+<div class="asof">MOJ Sales <b id="mojYr">—</b> · GASTAT to <b id="gastatQ">—</b> · land feed <b id="landDate">—</b></div></header>
+
+<!-- ============ FEATURED: RAW LAND LIVE ============ -->
+<div class="feat">
+<div class="badge"><span class="dot"></span>LIVE · raw-land plots · updated <span id="landUpd"></span> · source SREM</div>
+<h2 class="sec" style="margin-top:2px">Raw land — recent plot transactions <span class="rtl" style="color:var(--mut);font-size:13px">أراضي خام</span></h2>
+<div class="secsub">Vacant-plot deals only (SREM land-tagged feed). <span id="landN"></span> The collector refreshes this regularly; new plots accumulate over time.</div>
+<div class="summary" id="landSummary"></div>
+<div class="controls">
+<label>Plot size<select id="lBand"><option value="all">All sizes</option><option value="S">&lt; 300 m²</option><option value="M">300–600 m²</option><option value="L">600–1000 m²</option><option value="XL">&gt; 1000 m²</option></select></label>
+<label>District<select id="lDist"><option value="">All districts</option></select></label>
+<label>Sort by<select id="lSort"><option value="date">Newest first</option><option value="ppmD">SAR/m²: high to low</option><option value="ppmA">SAR/m²: low to high</option><option value="area">Largest plot</option><option value="amt">Highest value</option></select></label>
+</div>
+<div class="layout"><div>
+<svg class="riy" viewBox="0 0 520 470" id="lSvg"></svg>
+<div class="legend"><span id="lLo"></span><div class="legbar" id="lBar"></div><span id="lHi"></span><span style="margin-left:10px">colour = SAR/m² · grey = no plots yet · hover · scroll to zoom · drag to pan · dbl-click reset</span></div></div>
+<div class="panel"><div class="ph" id="lCount"></div><div class="scroll"><table>
+<thead><tr><th>District</th><th class="num">Area m²</th><th class="num">Price</th><th class="num">SAR/m²</th><th class="num">Date</th></tr></thead><tbody id="lBody"></tbody></table></div></div></div>
+</div>
+
+<!-- 5-year per-district chart removed: it blended land + built (not comparable). Land trend lives in the live feed above + GASTAT raw-land index below. -->
+
+<!-- ============ MOJ DISTRICT PRICES ============ -->
+<h2 class="sec">District prices — all transactions (SAR/m²)</h2>
+<div class="secsub">Value-weighted price per m² by district (official MOJ). Pick a <b>year</b> and <b>quarter</b> to see how prices moved across the last 5 years; the plot-size filter compares small units vs large plots.</div>
+<div class="tabs" id="tabs">
+<button data-t="res" class="on">Residential<span class="ar">سكني</span></button>
+<button data-t="com">Commercial<span class="ar">تجاري</span></button></div>
+<div class="summary" id="summary"></div>
+<div class="controls">
+<label>Year<select id="fYear"></select></label>
+<label>Quarter<select id="fQuarter"><option value="">Full year</option><option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="Q4">Q4</option></select></label>
+<label>Unit / plot size<select id="fBand"><option value="all">All sizes</option><option value="S">&lt; 300 m²</option><option value="M">300–600 m²</option><option value="L">600–1000 m²</option><option value="XL">&gt; 1000 m²</option></select></label>
+<label>District<select id="fDist"><option value="">All districts</option></select></label>
+<label>Sort by<select id="fSort"><option value="avgD">Price: high to low</option><option value="avgA">Price: low to high</option><option value="cnt">Most deals</option><option value="name">Name</option></select></label>
+<label>Min SAR/m²<input type="number" id="fMin" placeholder="0" min="0" step="500"></label>
+<label class="ck"><input type="checkbox" id="fRel" checked> Hide thin samples</label></div>
+<div class="layout"><div>
+<svg class="riy" viewBox="0 0 520 470" id="riySvg"></svg>
+<div class="legend"><span id="legLo"></span><div class="legbar" id="legbar"></div><span id="legHi"></span><span style="margin-left:10px">colour = SAR/m² · grey = no data · hover · scroll to zoom · drag to pan · dbl-click reset</span></div></div>
+<div class="panel"><div class="ph" id="tblCount"></div><div class="scroll"><table>
+<thead><tr><th>District</th><th class="num">SAR/m²</th><th class="num">Deals</th></tr></thead><tbody id="tbody"></tbody></table></div></div></div>
+
+<!-- ============ GASTAT INDEX ============ -->
+<h2 class="sec">Official price index by type — raw land, villa, apartment</h2>
+<div class="secsub">GASTAT Real Estate Price Index (base 2014 = 100), Kingdom level — the only official series isolating raw land, villas, apartments. Dashed = Riyadh overall.</div>
+<div class="idxcard"><div class="chips" id="chips"></div><svg id="idxSvg" viewBox="0 0 720 240" style="width:100%;height:auto"></svg></div>
+
+<div class="note" id="note"></div>
+</div>
+<div id="mtip"></div>
+<script>
+var P=__PAYLOAD__;var MOJP=P.mojp,SUMP=P.sump,REPI=P.repi,LAND=P.land,GEO=P.geo||{};var META=P.meta||{};
+var EN=P.en||{};function en(a){return EN[a]||a;}
+var fmt=function(n){return Math.round(n).toLocaleString('en-US');};
+var sar=function(n){return n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':fmt(n);};
+function nk(s){return String(s).replace(/حي/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,'').trim();}
+function col(v,lo,hi){var t=hi>lo?(v-lo)/(hi-lo):.5;var S=[[31,88,64],[47,158,99],[224,184,74],[232,134,58]];var seg=Math.min(2,Math.floor(t*3)),lt=t*3-seg,a=S[seg],b=S[seg+1];var c=a.map(function(x,i){return Math.round(x+(b[i]-x)*lt);});return'rgb('+c[0]+','+c[1]+','+c[2]+')';}
+function compass(){return '<text x="260" y="15" class="compass" text-anchor="middle">N</text><text x="260" y="464" class="compass" text-anchor="middle">S</text><text x="510" y="240" class="compass" text-anchor="middle">E</text><text x="11" y="240" class="compass" text-anchor="middle">W</text>';}
+function band(area){return area<300?'S':area<600?'M':area<1000?'L':'XL';}
+
+// ---------- shared tooltip ----------
+var MT=document.getElementById('mtip');
+function showTip(e,html){MT.innerHTML=html;MT.style.display='block';var x=e.clientX+14,y=e.clientY+14;if(x+216>window.innerWidth)x=e.clientX-200;if(y+90>window.innerHeight)y=e.clientY-90;MT.style.left=x+'px';MT.style.top=y+'px';}
+function hideTip(){MT.style.display='none';}
+function tip(name,a,b){return '<div class="tn">'+en(name)+' <span class="rtl">'+name+'</span></div><div class="tv">'+a+'</div>'+(b?'<div class="tc">'+b+'</div>':'');}
+
+// ---------- pan / zoom ----------
+var ZOOM={};
+function zst(svg){return ZOOM[svg.id]||(ZOOM[svg.id]={s:1,x:0,y:0});}
+function clampZ(z,vb){var mx=vb.width*(z.s-1),my=vb.height*(z.s-1);z.x=Math.min(0,Math.max(-mx,z.x));z.y=Math.min(0,Math.max(-my,z.y));}
+function applyZoom(svg){var z=zst(svg);var g=svg.querySelector(".zg");if(g)g.setAttribute("transform","translate("+z.x.toFixed(1)+" "+z.y.toFixed(1)+") scale("+z.s.toFixed(3)+")");}
+function enableZoom(svg){
+ svg.addEventListener("wheel",function(e){e.preventDefault();var z=zst(svg);var r=svg.getBoundingClientRect();var vb=svg.viewBox.baseVal;var px=(e.clientX-r.left)/r.width*vb.width,py=(e.clientY-r.top)/r.height*vb.height;var f=e.deltaY<0?1.2:1/1.2;var ns=Math.min(9,Math.max(1,z.s*f));z.x=px-(px-z.x)*(ns/z.s);z.y=py-(py-z.y)*(ns/z.s);z.s=ns;clampZ(z,vb);applyZoom(svg);},{passive:false});
+ var dr=null;
+ svg.addEventListener("pointerdown",function(e){dr={x:e.clientX,y:e.clientY,ox:zst(svg).x,oy:zst(svg).y,id:e.pointerId,cap:false};svg._panned=false;});
+ svg.addEventListener("pointermove",function(e){if(!dr)return;var moved=Math.abs(e.clientX-dr.x)+Math.abs(e.clientY-dr.y);if(moved<=4)return;svg._panned=true;if(!dr.cap){try{svg.setPointerCapture(dr.id);}catch(_){}dr.cap=true;}var r=svg.getBoundingClientRect();var vb=svg.viewBox.baseVal;var z=zst(svg);z.x=dr.ox+(e.clientX-dr.x)/r.width*vb.width;z.y=dr.oy+(e.clientY-dr.y)/r.height*vb.height;clampZ(z,vb);applyZoom(svg);});
+ function end(){if(dr&&dr.cap){try{svg.releasePointerCapture(dr.id);}catch(_){}}dr=null;}svg.addEventListener("pointerup",end);svg.addEventListener("pointercancel",end);svg.addEventListener("pointerleave",end);
+ svg.addEventListener("dblclick",function(e){e.preventDefault();var z=zst(svg);z.s=1;z.x=0;z.y=0;applyZoom(svg);});
+}
+function setMeta(){if(META.year)document.getElementById("mojYr").textContent=META.year;if(META.gq)document.getElementById("gastatQ").textContent=META.gq;var ld=document.getElementById("landDate");if(ld)ld.textContent=(LAND.updated||"—");}
+// ---------- shared choropleth ----------
+// dataMap: { geoKey: {v:number, name:rawName, t:tooltipHTML} } ; selKey = geoKey or ''
+function choropleth(svg,dataMap,lo,hi,selKey,onPick){
+ var base='',data='',sel='';
+ Object.keys(GEO).forEach(function(k){var g=GEO[k];var dd=dataMap[k];
+  if(!dd){base+='<path class="geobase" d="'+g.d+'"></path>';return;}
+  var ph='<path class="dz'+(selKey===k?' selz':'')+'" data-k="'+k+'" d="'+g.d+'" fill="'+col(Math.min(dd.v,hi),lo,hi)+'"></path>';
+  if(selKey===k)sel+=ph;else data+=ph;});
+ svg.innerHTML=compass()+'<g class="zg">'+base+data+sel+'</g>';applyZoom(svg);
+ Array.prototype.forEach.call(svg.querySelectorAll('.dz'),function(p){
+  var dd=dataMap[p.getAttribute('data-k')];
+  p.addEventListener('mousemove',function(e){showTip(e,dd.t);});
+  p.addEventListener('mouseleave',hideTip);
+  p.addEventListener('click',function(){if(p.ownerSVGElement&&p.ownerSVGElement._panned)return;hideTip();onPick(dd.name);});});
+}
+function scale(vals){var lo=vals.length?Math.min.apply(null,vals):0;var s=vals.slice().sort(function(a,b){return a-b;});var hi=s.length?s[Math.floor(s.length*0.92)]:1;if(hi<=lo)hi=lo+1;return[lo,hi];}
+function legend(loEl,barEl,hiEl,lo,hi){document.getElementById(loEl).textContent=fmt(lo);document.getElementById(hiEl).textContent=fmt(hi)+'+';document.getElementById(barEl).style.background='linear-gradient(90deg,'+col(lo,lo,hi)+','+col((lo+hi)/2,lo,hi)+','+col(hi,lo,hi)+')';}
+
+// ---------- RAW LAND LIVE ----------
+var lst={dist:'',size:'all',sort:'date',sel:''};
+document.getElementById('landUpd').textContent=LAND.updated;
+document.getElementById('landN').textContent=LAND.n+' plots collected so far.';
+(function(){var ds=Object.keys(LAND.agg).sort();var s=document.getElementById('lDist');ds.sort(function(a,b){return en(a).localeCompare(en(b));}).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=en(n)+'  ·  '+n;s.appendChild(o);});})();
+function lFiltered(){return LAND.deals.filter(function(x){return (lst.size==='all'||band(x[1])===lst.size);});}
+function lAgg(){ if(lst.size==='all') return LAND.agg; var a={}; lFiltered().forEach(function(d){var x=a[d[0]]||[0,0,0];x[0]+=d[2];x[1]+=d[1];x[2]++;a[d[0]]=x;}); var o={};Object.keys(a).forEach(function(k){if(a[k][1]>0)o[k]=[Math.round(a[k][0]/a[k][1]),a[k][2]];});return o;}
+function lRows(){var r=lFiltered();if(lst.dist)r=r.filter(function(x){return x[0]===lst.dist;});
+ var s=lst.sort;r.sort(function(a,b){return s==='ppmD'?b[3]-a[3]:s==='ppmA'?a[3]-b[3]:s==='area'?b[1]-a[1]:s==='amt'?b[2]-a[2]:(a[4]<b[4]?1:-1);});return r;}
+function renderLand(){
+ var agg=lAgg();var fdeals=lFiltered();
+ var ppms=fdeals.map(function(d){return d[3];}).filter(function(x){return x>0;});var med=ppms.slice().sort(function(a,b){return a-b;})[Math.floor(ppms.length/2)]||0;
+ document.getElementById('landSummary').innerHTML='<div>Median plot price <b>'+fmt(med)+'</b> SAR/m²</div><div>Plots <b>'+fdeals.length+'</b></div><div>Districts <b>'+Object.keys(agg).length+'</b></div>';
+ var av=Object.values(agg).map(function(v){return v[0];});var sc=scale(av);var lo=sc[0],hi=sc[1];
+ legend('lLo','lBar','lHi',lo,hi);
+ var dataMap={};Object.keys(agg).forEach(function(n){var gk=nk(n);if(GEO[gk]){var v=agg[n];dataMap[gk]={v:v[0],name:n,t:tip(n,fmt(v[0])+' SAR/m²',v[1]+' plot'+(v[1]>1?'s':''))};}});
+ choropleth(document.getElementById('lSvg'),dataMap,lo,hi,lst.sel?nk(lst.sel):'',function(name){lst.sel=lst.sel===name?'':name;lst.dist=lst.sel;document.getElementById('lDist').value=lst.dist;renderLand();});
+ var rs=lRows();
+ document.getElementById('lCount').textContent=rs.length+' plot transactions'+(lst.size!=='all'?' · '+document.getElementById('lBand').selectedOptions[0].text:'')+(lst.dist?' · '+en(lst.dist):'');
+ var tb=document.getElementById('lBody');
+ tb.innerHTML=rs.length?rs.map(function(d){return '<tr'+(lst.sel===d[0]?' class="sel"':'')+' data-n="'+d[0]+'"><td>'+en(d[0])+' <span class="rtl" style="color:var(--mut);font-size:11px">'+d[0]+'</span></td><td class="num">'+fmt(d[1])+'</td><td class="num">'+sar(d[2])+'</td><td class="num"><b>'+fmt(d[3])+'</b></td><td class="num" style="color:var(--mut);font-size:12px">'+d[4]+'</td></tr>';}).join(''):'<tr><td colspan="5" style="color:var(--mut);padding:16px">No plots for this filter yet.</td></tr>';
+ Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr){tr.onclick=function(){var n=tr.getAttribute('data-n');if(!n)return;lst.sel=lst.sel===n?'':n;renderLand();};});
+}
+document.getElementById('lBand').onchange=function(){lst.size=this.value;renderLand();};
+document.getElementById('lDist').onchange=function(){lst.dist=this.value;lst.sel=this.value;renderLand();};
+document.getElementById('lSort').onchange=function(){lst.sort=this.value;renderLand();};
+
+// ---------- MOJ DISTRICT ----------
+var st={type:'res',band:'all',dist:'',sort:'avgD',min:0,rel:true,sel:'',year:(META.year||''),quarter:''};
+function pkey(){return st.year+(st.quarter||'');}
+function curMOJ(){return MOJP[pkey()]||MOJP[st.year]||MOJP[META.year]||{res:[],com:[]};}
+function curSum(){return SUMP[pkey()]||SUMP[st.year]||SUMP[META.year]||{res:[0,0],com:[0,0]};}
+function periodLabel(){return st.year+(st.quarter?(' '+st.quarter):'');}
+function updateMojHdr(){var el=document.getElementById('mojYr');if(el)el.textContent=periodLabel();}
+(function(){var s=document.getElementById('fDist');(MOJP[META.year]||{res:[]}).res.map(function(r){return r.d;}).sort(function(a,b){return en(a).localeCompare(en(b));}).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=en(n)+'  ·  '+n;s.appendChild(o);});})();
+function val(rec){return st.band==='all'?rec.all:(rec.b[st.band]||null);}
+function rows(){var out=[];curMOJ()[st.type].forEach(function(rec){var v=val(rec);if(!v)return;var minN=st.band==='all'?5:3;if(st.rel&&v[1]<minN)return;if(st.dist&&rec.d!==st.dist)return;if(st.min>0&&v[0]<st.min)return;out.push({d:rec.d,ppm:v[0],n:v[1]});});
+ var s=st.sort;out.sort(function(a,b){return s==='avgA'?a.ppm-b.ppm:s==='cnt'?b.n-a.n:s==='name'?a.d.localeCompare(b.d):b.ppm-a.ppm;});return out;}
+function render(){var sm=curSum()[st.type];document.getElementById('summary').innerHTML='<div>Period <b>'+periodLabel()+'</b></div><div>City avg <b>'+fmt(sm[0])+'</b> SAR/m²</div><div>Deals <b>'+fmt(sm[1])+'</b></div><div>Districts <b>'+curMOJ()[st.type].length+'</b></div>';
+ var rs=rows();var sc=scale(rs.map(function(r){return r.ppm;}));var lo=sc[0],hi=sc[1];
+ legend('legLo','legbar','legHi',lo,hi);
+ var dataMap={};rs.forEach(function(r){var gk=nk(r.d);if(GEO[gk])dataMap[gk]={v:r.ppm,name:r.d,t:tip(r.d,fmt(r.ppm)+' SAR/m²',fmt(r.n)+' deals')};});
+ choropleth(document.getElementById('riySvg'),dataMap,lo,hi,st.sel?nk(st.sel):'',function(name){st.sel=st.sel===name?'':name;st.dist=st.sel;document.getElementById('fDist').value=st.dist;render();});
+ document.getElementById('tblCount').textContent=rs.length+' districts'+(st.band!=='all'?' · '+document.getElementById('fBand').selectedOptions[0].text:'');
+ var tb=document.getElementById('tbody');tb.innerHTML=rs.length?rs.map(function(r){var off=GEO[nk(r.d)]?'':' <span style="color:#546b5e;font-size:10px">(off-map)</span>';return '<tr'+(st.sel===r.d?' class="sel"':'')+' data-n="'+r.d+'"><td>'+en(r.d)+' <span class="rtl" style="color:var(--mut);font-size:11px">'+r.d+'</span>'+off+'</td><td class="num"><b>'+fmt(r.ppm)+'</b></td><td class="num">'+fmt(r.n)+'</td></tr>';}).join(''):'<tr><td colspan="3" style="color:var(--mut);padding:16px">No districts match.</td></tr>';
+ Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr){tr.onclick=function(){var n=tr.getAttribute('data-n');if(!n)return;st.sel=st.sel===n?'':n;render();};});}
+Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');st.type=b.getAttribute('data-t');st.sel='';st.dist='';document.getElementById('fDist').value='';render();};});
+(function(){var s=document.getElementById('fYear');(META.years||[st.year]).forEach(function(y){var o=document.createElement('option');o.value=y;o.textContent=y;s.appendChild(o);});s.value=st.year;})();
+document.getElementById('fYear').onchange=function(){st.year=this.value;st.sel='';st.dist='';document.getElementById('fDist').value='';updateMojHdr();render();};
+document.getElementById('fQuarter').onchange=function(){st.quarter=this.value;st.sel='';updateMojHdr();render();};
+document.getElementById('fBand').onchange=function(){st.band=this.value;render();};
+document.getElementById('fDist').onchange=function(){st.dist=this.value;st.sel=this.value;render();};
+document.getElementById('fSort').onchange=function(){st.sort=this.value;render();};
+document.getElementById('fMin').oninput=function(){st.min=+this.value||0;render();};
+document.getElementById('fRel').onchange=function(){st.rel=this.checked;render();};
+
+// ---------- GASTAT INDEX ----------
+var SER=[['resLand','Raw land (residential plot)','#e0b84a'],['villa','Villa','#6ca8ff'],['apt','Apartment','#36c07c'],['comLand','Commercial land','#e8863a'],['agriLand','Agricultural land','#b08cff']];
+var active={resLand:true,villa:true,apt:true,comLand:false,agriLand:false};
+function drawIdx(){var Q=REPI.quarters;var lines=[];SER.forEach(function(s){if(active[s[0]])lines.push([s[0],s[2],REPI.king[s[0]]]);});lines.push(['__riy','#cfe0d6',REPI.riyadhGeneral]);
+ var allv=[];lines.forEach(function(l){l[2].forEach(function(v){if(v!=null)allv.push(v);});});var mn=Math.floor(Math.min.apply(null,allv)/5)*5,mx=Math.ceil(Math.max.apply(null,allv)/5)*5;
+ var W=720,H=240,pad=36;var XX=function(i){return pad+i/(Q.length-1)*(W-pad-12);},Yc=function(v){return H-26-(v-mn)/(mx-mn||1)*(H-50);};
+ var h='';[mn,(mn+mx)/2,mx].forEach(function(v){var yy=Yc(v);h+='<line x1="'+pad+'" y1="'+yy+'" x2="'+(W-12)+'" y2="'+yy+'" stroke="#1c2c23"/><text x="6" y="'+(yy+3)+'" fill="#8fa899" font-size="9">'+v+'</text>';});
+ Q.forEach(function(q,i){h+='<text x="'+XX(i)+'" y="'+(H-8)+'" fill="#8fa899" font-size="9" text-anchor="middle">'+q.replace('20','`')+'</text>';});
+ lines.forEach(function(l){var dd='';l[2].forEach(function(v,i){if(v==null)return;dd+=(dd?'L':'M')+XX(i).toFixed(1)+' '+Yc(v).toFixed(1)+' ';});var dash=l[0]==='__riy'?' stroke-dasharray="4 3"':'';h+='<path d="'+dd+'" fill="none" stroke="'+l[1]+'" stroke-width="2"'+dash+'/>';});
+ document.getElementById('idxSvg').innerHTML=h;}
+function drawChips(){document.getElementById('chips').innerHTML=SER.map(function(s){return '<div class="chip'+(active[s[0]]?' on':'')+'" data-k="'+s[0]+'"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'</div>';}).join('')+'<div class="chip on" style="cursor:default"><span class="dot" style="background:#cfe0d6"></span>Riyadh overall (dashed)</div>';
+ Array.prototype.forEach.call(document.querySelectorAll('#chips .chip[data-k]'),function(c){c.onclick=function(){var k=c.getAttribute('data-k');active[k]=!active[k];drawChips();drawIdx();};});}
+
+document.getElementById('note').innerHTML='<b>The map</b> uses real Riyadh district boundaries (official admin polygons); colour = price, grey = no data for the current filter. <b>Raw land (top):</b> vacant-plot transactions from SREM’s land-tagged live feed (UnitType = land), the only source that isolates raw land at transaction level — filter by plot size. <b>District prices (middle):</b> official MOJ 2025 sales, value-weighted SAR/m²; MOJ classifies by use (residential/commercial), so the unit-size filter is the proxy for unit type. <b>Index (bottom):</b> GASTAT REPI (2014=100); raw-land/villa/apartment split is Kingdom-level (Riyadh reports only the combined index, dashed). Sources: SREM (srem.moj.gov.sa), <a href="https://github.com/civillizard/Saudi-Real-Estate-Data">civillizard/Saudi-Real-Estate-Data</a> (MOJ + GASTAT), <a href="https://github.com/homaily/Saudi-Arabia-Regions-Cities-and-Districts">homaily/Saudi-Arabia-Regions-Cities-and-Districts</a> (district boundaries).';
+renderLand();render();drawChips();drawIdx();setMeta();enableZoom(document.getElementById('lSvg'));enableZoom(document.getElementById('riySvg'));
+</script></body></html>

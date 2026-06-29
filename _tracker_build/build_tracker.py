@@ -90,7 +90,21 @@ HIST=json.load(open(os.path.join(HERE,'history.json'),encoding='utf-8')) if os.p
 GEO=json.load(open(os.path.join(HERE,'geo_riyadh.json'),encoding='utf-8')) if os.path.exists(os.path.join(HERE,'geo_riyadh.json')) else {}
 GQ=('Q%s %s'%(clean_qs[-1][-1],clean_qs[-1][:4])) if clean_qs else ''
 META={'year':year,'gq':GQ,'years':yrs}
-PAY=json.dumps({'mojp':MOJP,'sump':SUMP,'repi':REPI,'coords':COORDS,'land':LAND,'en':EN,'geo':GEO,'meta':META},ensure_ascii=False)
+# --- deal-level transactions (latest quarter) for the Actual Transactions table ---
+TX=[]; TXMETA={}
+if files:
+    _lastf=files[-1]
+    _lq=re.search(r'-Q(\d)',_lastf).group(1)
+    _dd=loadcity(_lastf).copy()
+    _dd['date']=_dd['date_g'].astype(str).str.replace('/','-',regex=False).str.slice(0,10)
+    _UM={'سكني':'R','تجاري':'C','زراعي':'A'}
+    _dd['u']=_dd['cls'].astype(str).str.strip().map(_UM).fillna('O')
+    _dd['npropi']=pd.to_numeric(_dd['nprop'],errors='coerce').fillna(1).astype(int)
+    _dd=_dd.sort_values('date',ascending=False)
+    for _,_r in _dd.head(5000).iterrows():
+        TX.append([_r['d'],_r['date'],_r['u'],int(_r['price']),int(_r['area']),int(round(_r['ppm'])),int(_r['npropi'])])
+    TXMETA={'period':str(year)+' Q'+_lq,'n':int(len(_dd)),'shown':len(TX)}
+PAY=json.dumps({'mojp':MOJP,'sump':SUMP,'repi':REPI,'coords':COORDS,'land':LAND,'en':EN,'geo':GEO,'meta':META,'txns':TX,'txmeta':TXMETA},ensure_ascii=False)
 tpl=open(os.path.join(HERE,'template.html'),encoding='utf-8').read()
 html=tpl.replace('__PAYLOAD__',PAY)
 import os as _os

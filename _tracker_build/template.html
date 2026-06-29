@@ -86,6 +86,20 @@ a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 <div class="panel"><div class="ph" id="tblCount"></div><div class="scroll"><table>
 <thead><tr><th>District</th><th class="num">SAR/m²</th><th class="num">Deals</th></tr></thead><tbody id="tbody"></tbody></table></div></div></div>
 
+<!-- ============ ACTUAL TRANSACTIONS (deal-level) ============ -->
+<h2 class="sec">Actual transactions — individual deals <span class="rtl" style="color:var(--mut);font-size:13px">الصفقات الفعلية</span></h2>
+<div class="secsub">Every registered MOJ sale for the latest published quarter (<span id="txPeriod">—</span>). MOJ classifies by use, so toggle <b>likely raw land</b> (single residential parcel &gt; 400 m²) as a proxy for vacant plots. <span id="txLag" style="color:#e7c768"></span></div>
+<div class="summary" id="txSummary"></div>
+<div class="controls">
+<label>Use<select id="txUse"><option value="">All uses</option><option value="R">Residential</option><option value="C">Commercial</option><option value="A">Agricultural</option></select></label>
+<label>District<select id="txDist"><option value="">All districts</option></select></label>
+<label>Size<select id="txBand"><option value="all">All sizes</option><option value="S">&lt; 300 m²</option><option value="M">300–600 m²</option><option value="L">600–1000 m²</option><option value="XL">&gt; 1000 m²</option></select></label>
+<label>Sort by<select id="txSort"><option value="date">Newest first</option><option value="ppmD">SAR/m²: high to low</option><option value="ppmA">SAR/m²: low to high</option><option value="area">Largest</option><option value="amt">Highest value</option></select></label>
+<label>Min SAR/m²<input type="number" id="txMin" placeholder="0" min="0" step="500"></label>
+<label class="ck"><input type="checkbox" id="txLand"> Likely raw land only</label></div>
+<div class="panel"><div class="ph" id="txCount"></div><div class="scroll" style="max-height:520px"><table>
+<thead><tr><th>District</th><th>Use</th><th class="num">Area m²</th><th class="num">Price</th><th class="num">SAR/m²</th><th class="num">Date</th></tr></thead><tbody id="txBody"></tbody></table></div></div>
+
 <!-- ============ GASTAT INDEX ============ -->
 <h2 class="sec">Official price index by type — raw land, villa, apartment</h2>
 <div class="secsub">GASTAT Real Estate Price Index (base 2014 = 100), Kingdom level — the only official series isolating raw land, villas, apartments. Dashed = Riyadh overall.</div>
@@ -198,6 +212,40 @@ document.getElementById('fSort').onchange=function(){st.sort=this.value;render()
 document.getElementById('fMin').oninput=function(){st.min=+this.value||0;render();};
 document.getElementById('fRel').onchange=function(){st.rel=this.checked;render();};
 
+// ---------- ACTUAL TRANSACTIONS (deal-level) ----------
+var TX=P.txns||[],TXM=P.txmeta||{};
+var txst={use:'',dist:'',band:'all',sort:'date',min:0,land:false};
+var UL={R:'Residential',C:'Commercial',A:'Agricultural',O:'Other'};
+(function(){var p=document.getElementById('txPeriod');if(p)p.textContent=TXM.period||'—';
+ var lg=document.getElementById('txLag');if(lg&&TXM.period)lg.textContent='Latest published quarter — official MOJ data lags ~1–2 quarters.';
+ var ds={};TX.forEach(function(t){ds[t[0]]=1;});var s=document.getElementById('txDist');
+ Object.keys(ds).sort(function(a,b){return en(a).localeCompare(en(b));}).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=en(n)+'  ·  '+n;s.appendChild(o);});})();
+function txIsLand(t){return t[2]==='R'&&t[6]===1&&t[4]>400;}
+function txRows(){var r=TX.filter(function(t){
+  if(txst.use&&t[2]!==txst.use)return false;
+  if(txst.dist&&t[0]!==txst.dist)return false;
+  if(txst.band!=='all'&&band(t[4])!==txst.band)return false;
+  if(txst.min>0&&t[5]<txst.min)return false;
+  if(txst.land&&!txIsLand(t))return false;
+  return true;});
+ var s=txst.sort;r.sort(function(a,b){return s==='ppmD'?b[5]-a[5]:s==='ppmA'?a[5]-b[5]:s==='area'?b[4]-a[4]:s==='amt'?b[3]-a[3]:(a[1]<b[1]?1:-1);});return r;}
+function renderTx(){var rs=txRows();
+ var ppms=rs.map(function(t){return t[5];}).filter(function(x){return x>0;}).sort(function(a,b){return a-b;});
+ var med=ppms.length?ppms[Math.floor(ppms.length/2)]:0;
+ var tot=rs.reduce(function(a,t){return a+t[3];},0);
+ document.getElementById('txSummary').innerHTML='<div>Deals shown <b>'+fmt(rs.length)+'</b></div><div>Median <b>'+fmt(med)+'</b> SAR/m²</div><div>Total value <b>'+sar(tot)+'</b> SAR</div>';
+ document.getElementById('txCount').textContent=fmt(rs.length)+' transactions'+(txst.land?' · likely raw land':'')+(txst.dist?' · '+en(txst.dist):'');
+ var tb=document.getElementById('txBody');var rows=rs.slice(0,1200);
+ tb.innerHTML=rs.length?rows.map(function(t){return '<tr><td>'+en(t[0])+' <span class="rtl" style="color:var(--mut);font-size:11px">'+t[0]+'</span></td><td style="color:var(--mut);font-size:12px">'+(UL[t[2]]||t[2])+'</td><td class="num">'+fmt(t[4])+'</td><td class="num">'+sar(t[3])+'</td><td class="num"><b>'+fmt(t[5])+'</b></td><td class="num" style="color:var(--mut);font-size:12px">'+t[1]+'</td></tr>';}).join(''):'<tr><td colspan="6" style="color:var(--mut);padding:16px">No transactions match this filter.</td></tr>';
+ if(rs.length>1200)tb.innerHTML+='<tr><td colspan="6" style="color:var(--mut);padding:10px;font-size:11px">Showing newest 1,200 of '+fmt(rs.length)+' — refine filters to narrow.</td></tr>';
+}
+document.getElementById('txUse').onchange=function(){txst.use=this.value;renderTx();};
+document.getElementById('txDist').onchange=function(){txst.dist=this.value;renderTx();};
+document.getElementById('txBand').onchange=function(){txst.band=this.value;renderTx();};
+document.getElementById('txSort').onchange=function(){txst.sort=this.value;renderTx();};
+document.getElementById('txMin').oninput=function(){txst.min=+this.value||0;renderTx();};
+document.getElementById('txLand').onchange=function(){txst.land=this.checked;renderTx();};
+
 // ---------- GASTAT INDEX ----------
 var SER=[['resLand','Raw land (residential plot)','#e0b84a'],['villa','Villa','#6ca8ff'],['apt','Apartment','#36c07c'],['comLand','Commercial land','#e8863a'],['agriLand','Agricultural land','#b08cff']];
 var active={resLand:true,villa:true,apt:true,comLand:false,agriLand:false};
@@ -212,5 +260,5 @@ function drawChips(){document.getElementById('chips').innerHTML=SER.map(function
  Array.prototype.forEach.call(document.querySelectorAll('#chips .chip[data-k]'),function(c){c.onclick=function(){var k=c.getAttribute('data-k');active[k]=!active[k];drawChips();drawIdx();};});}
 
 document.getElementById('note').innerHTML='<b>The map</b> uses real Riyadh district boundaries (official admin polygons); colour = price, grey = no data for the current filter. <b>Raw land (top):</b> vacant-plot transactions from SREM’s land-tagged live feed (UnitType = land), the only source that isolates raw land at transaction level — filter by plot size. <b>District prices (middle):</b> official MOJ 2025 sales, value-weighted SAR/m²; MOJ classifies by use (residential/commercial), so the unit-size filter is the proxy for unit type. <b>Index (bottom):</b> GASTAT REPI (2014=100); raw-land/villa/apartment split is Kingdom-level (Riyadh reports only the combined index, dashed). Sources: SREM (srem.moj.gov.sa), <a href="https://github.com/civillizard/Saudi-Real-Estate-Data">civillizard/Saudi-Real-Estate-Data</a> (MOJ + GASTAT), <a href="https://github.com/homaily/Saudi-Arabia-Regions-Cities-and-Districts">homaily/Saudi-Arabia-Regions-Cities-and-Districts</a> (district boundaries).';
-renderLand();render();drawChips();drawIdx();setMeta();enableZoom(document.getElementById('lSvg'));enableZoom(document.getElementById('riySvg'));
+renderLand();render();renderTx();drawChips();drawIdx();setMeta();enableZoom(document.getElementById('lSvg'));enableZoom(document.getElementById('riySvg'));
 </script></body></html>

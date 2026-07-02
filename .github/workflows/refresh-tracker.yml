@@ -32,8 +32,8 @@ jobs:
       - name: Install dependencies
         run: pip install --quiet pandas
 
-      - name: Collect newest raw-land plots (SREM)   # runs hourly
-        run: python _tracker_build/collect_land.py || echo "land collect failed; continuing with existing data"
+      - name: Collect raw-land deals (Suhail)   # runs hourly
+        run: python _tracker_build/suhail_collect.py || echo "suhail collect failed; continuing with existing data"
 
       - name: Decide whether to deploy (once a day 05:00 UTC, or manual)
         id: gate

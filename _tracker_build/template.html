@@ -42,7 +42,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}tbody tr{cursor
 a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 </style></head><body><div class="wrap">
 <header class="top"><div><h1>Riyadh Real Estate Price Tracker</h1>
-<div class="sub">Raw-land live feed (SREM) · district prices (MOJ) · price index by type (GASTAT) · real district boundaries</div></div>
+<div class="sub">Raw-land deals (Suhail) · district prices (MOJ) · price index by type (GASTAT) · real district boundaries</div></div>
 <div class="asof">MOJ Sales <b id="mojYr">—</b> · GASTAT to <b id="gastatQ">—</b> · land feed <b id="landDate">—</b></div></header>
 <!-- ============ RATES & COMMODITIES ============ -->
 <div class="feat" id="ratesCard">
@@ -57,9 +57,9 @@ a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 
 <!-- ============ FEATURED: RAW LAND LIVE ============ -->
 <div class="feat">
-<div class="badge"><span class="dot"></span>LIVE · raw-land plots · updated <span id="landUpd"></span> · source SREM</div>
+<div class="badge"><span class="dot"></span>LIVE · raw-land deals · updated <span id="landUpd"></span> · source Suhail</div>
 <h2 class="sec" style="margin-top:2px">Raw land — recent plot transactions <span class="rtl" style="color:var(--mut);font-size:13px">أراضي خام</span></h2>
-<div class="secsub">Vacant-plot deals only (SREM land-tagged feed). <span id="landN"></span> The collector refreshes this regularly; new plots accumulate over time.</div>
+<div class="secsub">Vacant-plot (raw-land) deals from Suhail — trailing ~12 months. <span id="landN"></span> The collector refreshes this regularly; new plots accumulate over time.</div>
 <div class="summary" id="landSummary"></div>
 <div class="controls">
 <label>Plot size<select id="lBand"><option value="all">All sizes</option><option value="S">&lt; 300 m²</option><option value="M">300–600 m²</option><option value="L">600–1000 m²</option><option value="XL">&gt; 1000 m²</option></select></label>

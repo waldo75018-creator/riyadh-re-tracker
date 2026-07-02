@@ -44,6 +44,16 @@ a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 <header class="top"><div><h1>Riyadh Real Estate Price Tracker</h1>
 <div class="sub">Raw-land live feed (SREM) · district prices (MOJ) · price index by type (GASTAT) · real district boundaries</div></div>
 <div class="asof">MOJ Sales <b id="mojYr">—</b> · GASTAT to <b id="gastatQ">—</b> · land feed <b id="landDate">—</b></div></header>
+<!-- ============ RATES & COMMODITIES ============ -->
+<div class="feat" id="ratesCard">
+<div class="badge"><span class="dot"></span>LIVE · rates &amp; commodities · updated <span id="ratesUpd">—</span> · source Yahoo Finance</div>
+<h2 class="sec" style="margin-top:2px">Rates &amp; commodities</h2>
+<div class="secsub">Market prices refresh on each build. Policy &amp; interbank rates are set by the central banks (SAMA, Fed) and shown with their as-of date.</div>
+<div id="rateMarket" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"></div>
+<div class="secsub" style="margin-top:14px">Policy &amp; interbank <span id="ratePolAsOf" style="color:var(--mut)"></span></div>
+<div id="ratePolicy" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"></div>
+</div>
+
 
 <!-- ============ FEATURED: RAW LAND LIVE ============ -->
 <div class="feat">
@@ -111,6 +121,15 @@ a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 <script>
 var P=__PAYLOAD__;var MOJP=P.mojp,SUMP=P.sump,REPI=P.repi,LAND=P.land,GEO=P.geo||{};var META=P.meta||{};
 var EN=P.en||{};function en(a){return EN[a]||a;}
+function renderRates(){var R=P.rates||{};
+var u=document.getElementById('ratesUpd');if(u)u.textContent=R.updated||'—';
+var pao=document.getElementById('ratePolAsOf');if(pao)pao.textContent=R.policyAsOf?('· as of '+R.policyAsOf):'';
+function tile(x){var col=(!x.dir)?'var(--mut)':(x.dir>0?'#5fd3a0':'#e78a8a');
+var arw=(!x.dir)?'':(x.dir>0?'&#9650; ':'&#9660; ');
+var sub=x.sub?('<div style="font-size:11px;color:'+col+'">'+arw+x.sub+'</div>'):'';
+return '<div style="background:#152420;border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px"><div style="font-size:11px;color:var(--mut)">'+x.k+'</div><div style="font-size:16px;font-weight:600">'+x.v+'</div>'+sub+'</div>';}
+var mEl=document.getElementById('rateMarket');if(mEl)mEl.innerHTML=(R.market&&R.market.length)?R.market.map(tile).join(''):'<span style="color:var(--mut)">Market data unavailable this build.</span>';
+var pEl=document.getElementById('ratePolicy');if(pEl)pEl.innerHTML=(R.policy||[]).map(function(x){return tile({k:x.k,v:x.v,sub:'',dir:0});}).join('');}
 var fmt=function(n){return Math.round(n).toLocaleString('en-US');};
 var sar=function(n){return n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':fmt(n);};
 function nk(s){return String(s).replace(/حي/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,'').trim();}
@@ -260,5 +279,5 @@ function drawChips(){document.getElementById('chips').innerHTML=SER.map(function
  Array.prototype.forEach.call(document.querySelectorAll('#chips .chip[data-k]'),function(c){c.onclick=function(){var k=c.getAttribute('data-k');active[k]=!active[k];drawChips();drawIdx();};});}
 
 document.getElementById('note').innerHTML='<b>The map</b> uses real Riyadh district boundaries (official admin polygons); colour = price, grey = no data for the current filter. <b>Raw land (top):</b> vacant-plot transactions from SREM’s land-tagged live feed (UnitType = land), the only source that isolates raw land at transaction level — filter by plot size. <b>District prices (middle):</b> official MOJ 2025 sales, value-weighted SAR/m²; MOJ classifies by use (residential/commercial), so the unit-size filter is the proxy for unit type. <b>Index (bottom):</b> GASTAT REPI (2014=100); raw-land/villa/apartment split is Kingdom-level (Riyadh reports only the combined index, dashed). Sources: SREM (srem.moj.gov.sa), <a href="https://github.com/civillizard/Saudi-Real-Estate-Data">civillizard/Saudi-Real-Estate-Data</a> (MOJ + GASTAT), <a href="https://github.com/homaily/Saudi-Arabia-Regions-Cities-and-Districts">homaily/Saudi-Arabia-Regions-Cities-and-Districts</a> (district boundaries).';
-renderLand();render();renderTx();drawChips();drawIdx();setMeta();enableZoom(document.getElementById('lSvg'));enableZoom(document.getElementById('riySvg'));
+renderRates();renderLand();render();renderTx();drawChips();drawIdx();setMeta();enableZoom(document.getElementById('lSvg'));enableZoom(document.getElementById('riySvg'));
 </script></body></html>

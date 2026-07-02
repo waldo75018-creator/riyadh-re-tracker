@@ -104,11 +104,16 @@ if files:
     for _,_r in _dd.head(5000).iterrows():
         TX.append([_r['d'],_r['date'],_r['u'],int(_r['price']),int(_r['area']),int(round(_r['ppm'])),int(_r['npropi'])])
     TXMETA={'period':str(year)+' Q'+_lq,'n':int(len(_dd)),'shown':len(TX)}
-PAY=json.dumps({'mojp':MOJP,'sump':SUMP,'repi':REPI,'coords':COORDS,'land':LAND,'en':EN,'geo':GEO,'meta':META,'txns':TX,'txmeta':TXMETA},ensure_ascii=False)
+# --- rates and commodities (helper module; never fatal) ---
+try:
+    import rates_fetch; RATES=rates_fetch.get_rates()
+except Exception as _e:
+    print("rates failed:",_e); RATES={}
+PAY=json.dumps({'mojp':MOJP,'sump':SUMP,'repi':REPI,'coords':COORDS,'land':LAND,'en':EN,'geo':GEO,'meta':META,'txns':TX,'txmeta':TXMETA,'rates':RATES},ensure_ascii=False)
 tpl=open(os.path.join(HERE,'template.html'),encoding='utf-8').read()
 html=tpl.replace('__PAYLOAD__',PAY)
 import os as _os
 with open(OUT,'w',encoding='utf-8') as _f:
     _f.write(html); _f.flush(); _os.fsync(_f.fileno())
 assert _os.path.getsize(OUT)==len(html.encode('utf-8')), 'WRITE TRUNCATED %d/%d'%(_os.path.getsize(OUT),len(html.encode('utf-8')))
-print('Rebuilt %s geo=%d res=%d com=%d'%(year,len(GEO),len(MOJ['res']),len(MOJ['com'])))
+print

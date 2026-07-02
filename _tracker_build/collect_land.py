@@ -8,7 +8,7 @@ CODES=os.path.join(HERE,"land_district_codes.json"); OUTCSV=os.path.join(HERE,"r
 OFFF=os.path.join(HERE,"land_offset.txt")
 def call(body):
     try:
-        req=urllib.request.Request(API,data=json.dumps(body).encode(),headers={"Content-Type":"application/json"})
+        req=urllib.request.Request(API,data=json.dumps(body).encode(),headers={"Content-Type":"application/json","User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36","Accept":"application/json, text/plain, */*","Origin":"https://srem.moj.gov.sa","Referer":"https://srem.moj.gov.sa/"})
         with urllib.request.urlopen(req,timeout=9) as r: return json.loads(r.read().decode())
     except Exception: return None
 LAND_WORDS=["أرض","ارض"]

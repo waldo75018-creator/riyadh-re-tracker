@@ -53,6 +53,16 @@ a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 <div class="secsub" style="margin-top:14px">Policy &amp; interbank <span id="ratePolAsOf" style="color:var(--mut)"></span></div>
 <div id="ratePolicy" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"></div>
 </div>
+<div id="rcOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:60;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)hideRateChart()">
+<div style="background:#12211d;border:1px solid var(--line);border-radius:12px;max-width:720px;width:100%;padding:16px 18px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+<div><span id="rcTitle" style="font-size:17px;font-weight:600"></span>
+<span id="rcStat" style="font-size:13px;margin-left:8px"></span></div>
+<button onclick="hideRateChart()" style="background:none;border:1px solid var(--line);border-radius:6px;color:var(--mut);cursor:pointer;padding:2px 10px;font-size:13px">close</button></div>
+<div id="rcTabs" style="display:flex;gap:6px;margin:10px 0 8px;flex-wrap:wrap"></div>
+<div id="rcChart"></div>
+<div class="secsub" id="rcNote" style="margin-top:6px"></div>
+</div></div>
 
 
 <!-- ============ FEATURED: RAW LAND LIVE ============ -->
@@ -121,14 +131,60 @@ a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 <script>
 var P=__PAYLOAD__;var MOJP=P.mojp,SUMP=P.sump,REPI=P.repi,LAND=P.land,GEO=P.geo||{};var META=P.meta||{};
 var EN=P.en||{};function en(a){return EN[a]||a;}
+var rcKey=null,rcRange=null;
+function rcFmt(v,kind){if(kind==='yld')return v.toFixed(2)+'%';if(kind==='gold')return '$'+Math.round(v).toLocaleString('en-US');return '$'+v.toFixed(2);}
+function rcDate(ts,intraday){var d=new Date((ts+10800)*1000);var p=function(n){return (n<10?'0':'')+n;};
+return intraday?(p(d.getUTCHours())+':'+p(d.getUTCMinutes())):(d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate()));}
+function showRateChart(k){rcKey=k;rcRange=rcRange&&(P.rates.hist[k]||{})[rcRange]?rcRange:'1D';
+document.getElementById('rcOverlay').style.display='flex';drawRateChart();}
+function hideRateChart(){document.getElementById('rcOverlay').style.display='none';}
+function drawRateChart(){var R=P.rates||{},H=(R.hist||{})[rcKey]||{},S=H[rcRange];
+var tl=(R.market||[]).filter(function(x){return x.k===rcKey;})[0]||{};
+document.getElementById('rcTitle').textContent=rcKey+' \u00b7 '+(tl.v||'');
+var order=['1D','7D','1M','6M','1Y','5Y'];
+document.getElementById('rcTabs').innerHTML=order.filter(function(r){return H[r];}).map(function(r){
+var on=r===rcRange;return '<button onclick="rcRange=\''+r+'\';drawRateChart()" style="cursor:pointer;border-radius:6px;padding:3px 12px;font-size:12px;border:1px solid '+(on?'#C9A24B':'var(--line)')+';background:'+(on?'#C9A24B':'none')+';color:'+(on?'#103A2B':'var(--mut)')+';font-weight:'+(on?'600':'400')+'">'+r+'</button>';}).join('');
+var box=document.getElementById('rcChart');
+if(!S||S.c.length<2){box.innerHTML='<div class="secsub">No data for this range.</div>';return;}
+var t=S.t,c=S.c,n=c.length,kind=tl.kind||'usd';
+var lo=Math.min.apply(null,c),hi=Math.max.apply(null,c);if(hi-lo<1e-9){hi=lo+1;}
+var W=680,Hh=290,L=56,Rr=14,T=16,B=30,pw=W-L-Rr,ph=Hh-T-B;
+var X=function(i){return L+pw*i/(n-1);},Y=function(v){return T+ph*(1-(v-lo)/(hi-lo));};
+var pts='';for(var i=0;i<n;i++){pts+=(i?' L':'M')+X(i).toFixed(1)+' '+Y(c[i]).toFixed(1);}
+var chg=c[n-1]-c[0],up=chg>=0,lc=up?'#5fd3a0':'#e78a8a';
+var area=pts+' L'+X(n-1).toFixed(1)+' '+(T+ph)+' L'+L+' '+(T+ph)+' Z';
+var grid='',lbl='';
+for(var g=0;g<=3;g++){var v=lo+(hi-lo)*g/3,y=Y(v);
+grid+='<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-Rr)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)" stroke-dasharray="3 4" stroke-width="1"/>';
+lbl+='<text x="'+(L-6)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="var(--mut)">'+rcFmt(v,kind)+'</text>';}
+var intr=(rcRange==='1D'||rcRange==='7D');
+[0,Math.floor((n-1)/2),n-1].forEach(function(i,j){
+lbl+='<text x="'+X(i).toFixed(1)+'" y="'+(Hh-8)+'" text-anchor="'+(j===0?'start':(j===2?'end':'middle'))+'" font-size="10" fill="var(--mut)">'+rcDate(t[i],intr)+'</text>';});
+box.innerHTML='<svg id="rcSvg" viewBox="0 0 '+W+' '+Hh+'" style="width:100%;display:block">'+grid+
+'<path d="'+area+'" fill="'+lc+'" opacity="0.09"/><path d="'+pts+'" fill="none" stroke="'+lc+'" stroke-width="1.8"/>'+lbl+
+'<circle id="rcDot" r="3.5" fill="#C9A24B" style="display:none"/><text id="rcHov" font-size="11" fill="#C9A24B" text-anchor="middle" style="display:none"></text></svg>';
+var pc=chg/c[0]*100;
+document.getElementById('rcStat').innerHTML='<span style="color:'+lc+'">'+(up?'&#9650;':'&#9660;')+' '+(kind==='yld'?Math.abs(Math.round(chg*100))+'bp':rcFmt(Math.abs(chg),kind).replace('$','$'))+' ('+(pc>=0?'+':'')+pc.toFixed(2)+'%)</span> <span style="color:var(--mut)">over '+rcRange+'</span>';
+document.getElementById('rcNote').textContent=(rcRange==='1D'?'Intraday (5-min bars), last trading day as of the morning build. ':(rcRange==='7D'?'Last 5 trading days (30-min bars). ':''))+'Times in Riyadh (UTC+3). Data: Yahoo Finance, baked at each daily build.';
+var svg=document.getElementById('rcSvg');
+svg.addEventListener('mousemove',function(ev){var r=svg.getBoundingClientRect();var x=(ev.clientX-r.left)*W/r.width;
+var i=Math.round((x-L)/pw*(n-1));if(i<0)i=0;if(i>n-1)i=n-1;
+var dot=document.getElementById('rcDot'),hv=document.getElementById('rcHov');
+dot.style.display='';hv.style.display='';dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(c[i]));
+var tx=Math.min(Math.max(X(i),L+50),W-Rr-50);hv.setAttribute('x',tx);hv.setAttribute('y',Math.max(Y(c[i])-10,12));
+hv.textContent=rcFmt(c[i],kind)+' \u00b7 '+rcDate(t[i],intr);});
+svg.addEventListener('mouseleave',function(){document.getElementById('rcDot').style.display='none';document.getElementById('rcHov').style.display='none';});}
 function renderRates(){var R=P.rates||{};
 var u=document.getElementById('ratesUpd');if(u)u.textContent=R.updated||'—';
 var pao=document.getElementById('ratePolAsOf');if(pao)pao.textContent=R.policyAsOf?('· as of '+R.policyAsOf):'';
-function tile(x){var col=(!x.dir)?'var(--mut)':(x.dir>0?'#5fd3a0':'#e78a8a');
+function tile(x,click){var col=(!x.dir)?'var(--mut)':(x.dir>0?'#5fd3a0':'#e78a8a');
 var arw=(!x.dir)?'':(x.dir>0?'&#9650; ':'&#9660; ');
 var sub=x.sub?('<div style="font-size:11px;color:'+col+'">'+arw+x.sub+'</div>'):'';
-return '<div style="background:#152420;border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px"><div style="font-size:11px;color:var(--mut)">'+x.k+'</div><div style="font-size:16px;font-weight:600">'+x.v+'</div>'+sub+'</div>';}
-var mEl=document.getElementById('rateMarket');if(mEl)mEl.innerHTML=(R.market&&R.market.length)?R.market.map(tile).join(''):'<span style="color:var(--mut)">Market data unavailable this build.</span>';
+var can=click&&R.hist&&R.hist[x.k];
+var attr=can?(' data-rk="'+x.k+'" title="click for price history" onmouseover="this.style.borderColor=\'#C9A24B\'" onmouseout="this.style.borderColor=\'var(--line)\'"'):'';
+return '<div style="background:#152420;border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px'+(can?';cursor:pointer':'')+'"'+attr+'><div style="font-size:11px;color:var(--mut)">'+x.k+'</div><div style="font-size:16px;font-weight:600">'+x.v+'</div>'+sub+'</div>';}
+var mEl=document.getElementById('rateMarket');if(mEl){mEl.innerHTML=(R.market&&R.market.length)?R.market.map(function(x){return tile(x,true);}).join(''):'<span style="color:var(--mut)">Market data unavailable this build.</span>';
+mEl.querySelectorAll('[data-rk]').forEach(function(el){el.addEventListener('click',function(){showRateChart(el.getAttribute('data-rk'));});});}
 var pEl=document.getElementById('ratePolicy');if(pEl)pEl.innerHTML=(R.policy||[]).map(function(x){return tile({k:x.k,v:x.v,sub:'',dir:0});}).join('');}
 var fmt=function(n){return Math.round(n).toLocaleString('en-US');};
 var sar=function(n){return n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':fmt(n);};

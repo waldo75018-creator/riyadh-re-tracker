@@ -237,7 +237,7 @@ document.getElementById('landUpd').textContent=LAND.updated;
 document.getElementById('landN').textContent=LAND.n+' plots collected so far.';
 (function(){var ds=Object.keys(LAND.agg).sort();var s=document.getElementById('lDist');ds.sort(function(a,b){return en(a).localeCompare(en(b));}).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=en(n)+'  ·  '+n;s.appendChild(o);});})();
 function lFiltered(){return LAND.deals.filter(function(x){return (lst.size==='all'||band(x[1])===lst.size);});}
-function lAgg(){ if(lst.size==='all') return LAND.agg; var a={}; lFiltered().forEach(function(d){var x=a[d[0]]||[0,0,0];x[0]+=d[2];x[1]+=d[1];x[2]++;a[d[0]]=x;}); var o={};Object.keys(a).forEach(function(k){if(a[k][1]>0)o[k]=[Math.round(a[k][0]/a[k][1]),a[k][2]];});return o;}
+function lAgg(){ if(lst.size==='all') return LAND.agg; var a={}; lFiltered().forEach(function(d){(a[d[0]]=a[d[0]]||[]).push(d[3]);}); var o={};Object.keys(a).forEach(function(k){var v=a[k].slice().sort(function(x,y){return x-y;});o[k]=[v[Math.floor(v.length/2)],v.length];});return o;}
 function lRows(){var r=lFiltered();if(lst.dist)r=r.filter(function(x){return x[0]===lst.dist;});
  var s=lst.sort;r.sort(function(a,b){return s==='ppmD'?b[3]-a[3]:s==='ppmA'?a[3]-b[3]:s==='area'?b[1]-a[1]:s==='amt'?b[2]-a[2]:(a[4]<b[4]?1:-1);});return r;}
 function renderLand(){
@@ -246,7 +246,7 @@ function renderLand(){
  document.getElementById('landSummary').innerHTML='<div>Median plot price <b>'+fmt(med)+'</b> SAR/m²</div><div>Plots <b>'+fdeals.length+'</b></div><div>Districts <b>'+Object.keys(agg).length+'</b></div>';
  var av=Object.values(agg).map(function(v){return v[0];});var sc=scale(av);var lo=sc[0],hi=sc[1];
  legend('lLo','lBar','lHi',lo,hi);
- var dataMap={};Object.keys(agg).forEach(function(n){var gk=nk(n);if(GEO[gk]){var v=agg[n];dataMap[gk]={v:v[0],name:n,t:tip(n,fmt(v[0])+' SAR/m²',v[1]+' plot'+(v[1]>1?'s':''))};}});
+ var dataMap={};Object.keys(agg).forEach(function(n){var gk=nk(n);if(GEO[gk]){var v=agg[n];dataMap[gk]={v:v[0],name:n,t:tip(n,fmt(v[0])+' SAR/m² median',v[1]+' plot'+(v[1]>1?'s':''))};}});
  choropleth(document.getElementById('lSvg'),dataMap,lo,hi,lst.sel?nk(lst.sel):'',function(name){lst.sel=lst.sel===name?'':name;lst.dist=lst.sel;document.getElementById('lDist').value=lst.dist;renderLand();});
  var rs=lRows();
  document.getElementById('lCount').textContent=rs.length+' plot transactions'+(lst.size!=='all'?' · '+document.getElementById('lBand').selectedOptions[0].text:'')+(lst.dist?' · '+en(lst.dist):'');

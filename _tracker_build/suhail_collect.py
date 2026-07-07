@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # Collect Riyadh RAW-LAND deals from Suhail (api2.suhail.ai) -> raw_land_deals.csv (drop-in for build_tracker.py).
 # Suhail exposes full trailing-~12-month deal history per neighbourhood (vs SREM's ~5-recent cap).
-import json, os, csv, urllib.request, concurrent.futures as cf
+import json, os, csv, time, urllib.request, concurrent.futures as cf
 HERE = os.path.dirname(os.path.abspath(__file__))
 NB   = os.path.join(HERE, "suhail_neighbourhoods.json")
 OUT  = os.path.join(HERE, "raw_land_deals.csv")
 H = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-     "Origin":"https://www.suhail.ai","Referer":"https://www.suhail.ai/","Accept":"application/json, text/plain, */*"}
+     "Origin":"https://www.suhail.ai","Referer":"https://www.suhail.ai/","Accept":"application/json, text/plain, */*",
+     "Cache-Control":"no-cache","Pragma":"no-cache"}
 LANDWORDS = ["أرض", "ارض"]  # 'أرض' / 'ارض'
 def _get(nid, page=1, size=500):
-    url = "https://api2.suhail.ai/transactions/neighbourhood?regionId=10&neighbourhoodId=%s&page=%d&pageSize=%d" % (nid, page, size)
+    url = "https://api2.suhail.ai/transactions/neighbourhood?regionId=10&neighbourhoodId=%s&page=%d&pageSize=%d&_ts=%d" % (nid, page, size, int(time.time()*1000))
     req = urllib.request.Request(url, headers=H)
     with urllib.request.urlopen(req, timeout=15) as r:
         return json.load(r)

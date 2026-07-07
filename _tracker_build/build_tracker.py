@@ -78,9 +78,10 @@ if os.path.exists(LANDCSV):
         except: continue
         if ar<=0 or am<=0: continue
         land_deals.append([d,int(ar),int(am),int(pm),r['date']])
-        a=agg.setdefault(d,[0.0,0.0,0]); a[0]+=am; a[1]+=ar; a[2]+=1
+        agg.setdefault(d,[]).append(pm if pm>0 else am/ar)
     land_deals.sort(key=lambda x:x[4],reverse=True)
-    land_agg={d:[int(round(v[0]/v[1])),v[2]] for d,v in agg.items() if v[1]>0}
+    # median SAR/m2 per district (robust to mega-parcel outliers that wreck a value-weighted avg)
+    land_agg={d:[int(round(sorted(v)[len(v)//2])),len(v)] for d,v in agg.items() if v}
     land_updated=_dt.datetime.fromtimestamp(os.path.getmtime(LANDCSV)).strftime('%Y-%m-%d %H:%M')
 else:
     land_updated='—'
@@ -116,4 +117,4 @@ import os as _os
 with open(OUT,'w',encoding='utf-8') as _f:
     _f.write(html); _f.flush(); _os.fsync(_f.fileno())
 assert _os.path.getsize(OUT)==len(html.encode('utf-8')), 'WRITE TRUNCATED %d/%d'%(_os.path.getsize(OUT),len(html.encode('utf-8')))
-print
+print('build OK:',OUT,os.path.getsize(OUT),'bytes')

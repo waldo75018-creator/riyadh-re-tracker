@@ -96,25 +96,30 @@ GEO=json.load(open(os.path.join(HERE,'geo_riyadh.json'),encoding='utf-8')) if os
 GQ=('Q%s %s'%(clean_qs[-1][-1],clean_qs[-1][:4])) if clean_qs else ''
 META={'year':year,'gq':GQ,'years':yrs}
 # --- deal-level transactions (latest quarter) for the Actual Transactions table ---
-TX=[]; TXMETA={}
+TX=[]; TXMETA={}; TXD=[]
 if files:
-    _lastf=files[-1]
-    _lq=re.search(r'-Q(\d)',_lastf).group(1)
-    _dd=loadcity(_lastf).copy()
+    _parts=[]
+    for _f in files:
+        _p=loadcity(_f).copy(); _parts.append(_p)
+    _dd=pd.concat(_parts)
     _dd['date']=_dd['date_g'].astype(str).str.replace('/','-',regex=False).str.slice(0,10)
-    _UM={'سكني':'R','تجاري':'C','زراعي':'A'}
-    _dd['u']=_dd['cls'].astype(str).str.strip().map(_UM).fillna('O')
+    _UM={'سكني':0,'تجاري':1,'زراعي':2}
+    _dd['u']=_dd['cls'].astype(str).str.strip().map(_UM).fillna(3).astype(int)
     _dd['npropi']=pd.to_numeric(_dd['nprop'],errors='coerce').fillna(1).astype(int)
-    _dd=_dd.sort_values('date',ascending=False)
-    for _,_r in _dd.head(5000).iterrows():
-        TX.append([_r['d'],_r['date'],_r['u'],int(_r['price']),int(_r['area']),int(round(_r['ppm'])),int(_r['npropi'])])
-    TXMETA={'period':str(year)+' Q'+_lq,'n':int(len(_dd)),'shown':len(TX)}
+    _dd=_dd.sort_values('date',ascending=False).head(25000)
+    # compact: district index + yyyymmdd int + use index (R/C/A/O); template decodes
+    TXD=sorted(_dd['d'].unique()); _txdi={d:i for i,d in enumerate(TXD)}
+    for _,_r in _dd.iterrows():
+        _ds=str(_r['date']).replace('-','')[:8]
+        TX.append([_txdi[_r['d']],int(_ds) if _ds.isdigit() else 0,int(_r['u']),int(_r['price']),int(_r['area']),int(round(_r['ppm'])),int(_r['npropi'])])
+    _qn=sorted(re.search(r'-Q(\d)',_f).group(1) for _f in files)
+    TXMETA={'period':str(year)+' (Q'+_qn[0]+'-Q'+_qn[-1]+')','n':int(len(_dd)),'shown':len(TX)}
 # --- rates and commodities (helper module; never fatal) ---
 try:
     import rates_fetch; RATES=rates_fetch.get_rates()
 except Exception as _e:
     print("rates failed:",_e); RATES={}
-PAY=json.dumps({'mojp':MOJP,'sump':SUMP,'repi':REPI,'coords':COORDS,'land':LAND,'en':EN,'geo':GEO,'meta':META,'txns':TX,'txmeta':TXMETA,'rates':RATES},ensure_ascii=False)
+PAY=json.dumps({'mojp':MOJP,'sump':SUMP,'repi':REPI,'coords':COORDS,'land':LAND,'en':EN,'geo':GEO,'meta':META,'txns':TX,'txd':TXD,'txmeta':TXMETA,'rates':RATES},ensure_ascii=False)
 tpl=open(os.path.join(HERE,'template.html'),encoding='utf-8').read()
 html=tpl.replace('__PAYLOAD__',PAY)
 import os as _os

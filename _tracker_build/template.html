@@ -131,6 +131,7 @@ a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 <script>
 var P=__PAYLOAD__;var MOJP=P.mojp,SUMP=P.sump,REPI=P.repi,LAND=P.land,GEO=P.geo||{};var META=P.meta||{};
 var EN=P.en||{};function en(a){return EN[a]||a;}
+if(LAND&&LAND.dists){LAND.deals=LAND.deals.map(function(x){var s=String(x[4]);var dt=s.length===8?(s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8)):'';return [LAND.dists[x[0]],x[1],x[2],x[3],dt];});}
 var rcKey=null,rcRange=null;
 function rcFmt(v,kind){if(kind==='yld')return v.toFixed(2)+'%';if(kind==='gold')return '$'+Math.round(v).toLocaleString('en-US');return '$'+v.toFixed(2);}
 function rcDate(ts,intraday){var d=new Date((ts+10800)*1000);var p=function(n){return (n<10?'0':'')+n;};
@@ -251,7 +252,9 @@ function renderLand(){
  var rs=lRows();
  document.getElementById('lCount').textContent=rs.length+' plot transactions'+(lst.size!=='all'?' · '+document.getElementById('lBand').selectedOptions[0].text:'')+(lst.dist?' · '+en(lst.dist):'');
  var tb=document.getElementById('lBody');
- tb.innerHTML=rs.length?rs.map(function(d){return '<tr'+(lst.sel===d[0]?' class="sel"':'')+' data-n="'+d[0]+'"><td>'+en(d[0])+' <span class="rtl" style="color:var(--mut);font-size:11px">'+d[0]+'</span></td><td class="num">'+fmt(d[1])+'</td><td class="num">'+sar(d[2])+'</td><td class="num"><b>'+fmt(d[3])+'</b></td><td class="num" style="color:var(--mut);font-size:12px">'+d[4]+'</td></tr>';}).join(''):'<tr><td colspan="5" style="color:var(--mut);padding:16px">No plots for this filter yet.</td></tr>';
+ var shown=rs.slice(0,1500);
+ tb.innerHTML=rs.length?shown.map(function(d){return '<tr'+(lst.sel===d[0]?' class="sel"':'')+' data-n="'+d[0]+'"><td>'+en(d[0])+' <span class="rtl" style="color:var(--mut);font-size:11px">'+d[0]+'</span></td><td class="num">'+fmt(d[1])+'</td><td class="num">'+sar(d[2])+'</td><td class="num"><b>'+fmt(d[3])+'</b></td><td class="num" style="color:var(--mut);font-size:12px">'+d[4]+'</td></tr>';}).join(''):'<tr><td colspan="5" style="color:var(--mut);padding:16px">No plots for this filter yet.</td></tr>';
+ if(rs.length>1500)tb.innerHTML+='<tr><td colspan="5" style="color:var(--mut);padding:10px;font-size:11px">Showing newest 1,500 of '+fmt(rs.length)+' deals &#183; pick a district or size to see them all.</td></tr>';
  Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr){tr.onclick=function(){var n=tr.getAttribute('data-n');if(!n)return;lst.sel=lst.sel===n?'':n;renderLand();};});
 }
 document.getElementById('lBand').onchange=function(){lst.size=this.value;renderLand();};

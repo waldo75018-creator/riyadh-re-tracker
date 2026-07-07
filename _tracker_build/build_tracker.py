@@ -85,7 +85,11 @@ if os.path.exists(LANDCSV):
     land_updated=_dt.datetime.fromtimestamp(os.path.getmtime(LANDCSV)).strftime('%Y-%m-%d %H:%M')
 else:
     land_updated='—'
-LAND={'deals':land_deals[:400],'agg':land_agg,'updated':land_updated,'n':len(land_deals)}
+# ship ALL deals compactly: district as index into 'dists', date as yyyymmdd int (template decodes)
+_dlist=sorted({d[0] for d in land_deals})
+_didx={d:i for i,d in enumerate(_dlist)}
+_comp=[[_didx[d[0]],d[1],d[2],d[3],int(d[4].replace('-','') or 0)] for d in land_deals]
+LAND={'deals':_comp,'dists':_dlist,'agg':land_agg,'updated':land_updated,'n':len(land_deals)}
 EN=json.load(open(os.path.join(HERE,'en_names.json'),encoding='utf-8')) if os.path.exists(os.path.join(HERE,'en_names.json')) else {}
 HIST=json.load(open(os.path.join(HERE,'history.json'),encoding='utf-8')) if os.path.exists(os.path.join(HERE,'history.json')) else {}
 GEO=json.load(open(os.path.join(HERE,'geo_riyadh.json'),encoding='utf-8')) if os.path.exists(os.path.join(HERE,'geo_riyadh.json')) else {}

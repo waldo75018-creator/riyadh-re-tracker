@@ -107,11 +107,12 @@ a{color:#5fd3a0}@media(max-width:820px){.layout{grid-template-columns:1fr}}
 <thead><tr><th>District</th><th class="num">SAR/m²</th><th class="num">Deals</th></tr></thead><tbody id="tbody"></tbody></table></div></div></div>
 
 <!-- ============ ACTUAL TRANSACTIONS (deal-level) ============ -->
-<h2 class="sec">Actual transactions — individual deals <span class="rtl" style="color:var(--mut);font-size:13px">الصفقات الفعلية</span></h2>
-<div class="secsub">Every registered MOJ sale for the latest published quarter (<span id="txPeriod">—</span>). MOJ classifies by use, so toggle <b>likely raw land</b> (single residential parcel &gt; 400 m²) as a proxy for vacant plots. <span id="txLag" style="color:#e7c768"></span></div>
+<h2 class="sec" id="txsec">Actual transactions — individual deals <span class="rtl" style="color:var(--mut);font-size:13px">الصفقات الفعلية</span></h2>
+<div class="secsub">Every registered MOJ sale for <b><span id="txPeriod">—</span></b> — filter by quarter, use, district or size. MOJ classifies by use, so toggle <b>likely raw land</b> (single residential parcel &gt; 400 m²) as a proxy for vacant plots. <span id="txLag" style="color:#e7c768"></span></div>
 <div class="summary" id="txSummary"></div>
 <div class="controls">
 <label>Use<select id="txUse"><option value="">All uses</option><option value="R">Residential</option><option value="C">Commercial</option><option value="A">Agricultural</option></select></label>
+<label>Quarter<select id="txQ"><option value="">Full year</option><option value="1">Q1</option><option value="2">Q2</option><option value="3">Q3</option><option value="4">Q4</option></select></label>
 <label>District<select id="txDist"><option value="">All districts</option></select></label>
 <label>Size<select id="txBand"><option value="all">All sizes</option><option value="S">&lt; 300 m²</option><option value="M">300–600 m²</option><option value="L">600–1000 m²</option><option value="XL">&gt; 1000 m²</option></select></label>
 <label>Sort by<select id="txSort"><option value="date">Newest first</option><option value="ppmD">SAR/m²: high to low</option><option value="ppmA">SAR/m²: low to high</option><option value="area">Largest</option><option value="amt">Highest value</option></select></label>
@@ -272,7 +273,9 @@ function updateMojHdr(){var el=document.getElementById('mojYr');if(el)el.textCon
 function val(rec){return st.band==='all'?rec.all:(rec.b[st.band]||null);}
 function rows(){var out=[];curMOJ()[st.type].forEach(function(rec){var v=val(rec);if(!v)return;var minN=st.band==='all'?5:3;if(st.rel&&v[1]<minN)return;if(st.dist&&rec.d!==st.dist)return;if(st.min>0&&v[0]<st.min)return;out.push({d:rec.d,ppm:v[0],n:v[1]});});
  var s=st.sort;out.sort(function(a,b){return s==='avgA'?a.ppm-b.ppm:s==='cnt'?b.n-a.n:s==='name'?a.d.localeCompare(b.d):b.ppm-a.ppm;});return out;}
-function render(){var sm=curSum()[st.type];document.getElementById('summary').innerHTML='<div>Period <b>'+periodLabel()+'</b></div><div>City avg <b>'+fmt(sm[0])+'</b> SAR/m²</div><div>Deals <b>'+fmt(sm[1])+'</b></div><div>Districts <b>'+curMOJ()[st.type].length+'</b></div>';
+function render(){var sm=curSum()[st.type];document.getElementById('summary').innerHTML='<div>Period <b>'+periodLabel()+'</b></div><div>City avg <b>'+fmt(sm[0])+'</b> SAR/m²</div><div>Deals <b>'+fmt(sm[1])+'</b></div><div>Districts <b>'+curMOJ()[st.type].length+'</b></div>'+(st.sel?'<div><a href="#txsec" id="mojDrill" style="cursor:pointer;font-size:13px">View '+en(st.sel)+' individual deals &#8595;</a></div>':'');
+ var md=document.getElementById('mojDrill');if(md)md.onclick=function(){txst.dist=st.sel;txst.use=(st.type==='com'?'C':'R');txst.q=(st.quarter?st.quarter.slice(1):'');txst.land=false;
+ var s1=document.getElementById('txDist');if(s1)s1.value=st.sel;var s2=document.getElementById('txUse');if(s2)s2.value=txst.use;var s3=document.getElementById('txQ');if(s3)s3.value=txst.q;var s4=document.getElementById('txLand');if(s4)s4.checked=false;renderTx();};
  var rs=rows();var sc=scale(rs.map(function(r){return r.ppm;}));var lo=sc[0],hi=sc[1];
  legend('legLo','legbar','legHi',lo,hi);
  var dataMap={};rs.forEach(function(r){var gk=nk(r.d);if(GEO[gk])dataMap[gk]={v:r.ppm,name:r.d,t:tip(r.d,fmt(r.ppm)+' SAR/m²',fmt(r.n)+' deals')};});
@@ -292,15 +295,17 @@ document.getElementById('fRel').onchange=function(){st.rel=this.checked;render()
 
 // ---------- ACTUAL TRANSACTIONS (deal-level) ----------
 var TX=P.txns||[],TXM=P.txmeta||{};
-var txst={use:'',dist:'',band:'all',sort:'date',min:0,land:false};
+if(P.txd){TX=TX.map(function(x){var s=String(x[1]);var dt=s.length===8?(s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8)):'';return [P.txd[x[0]],dt,['R','C','A','O'][x[2]]||'O',x[3],x[4],x[5],x[6]];});}
+var txst={use:'',dist:'',band:'all',sort:'date',min:0,land:false,q:''};
 var UL={R:'Residential',C:'Commercial',A:'Agricultural',O:'Other'};
 (function(){var p=document.getElementById('txPeriod');if(p)p.textContent=TXM.period||'—';
- var lg=document.getElementById('txLag');if(lg&&TXM.period)lg.textContent='Latest published quarter — official MOJ data lags ~1–2 quarters.';
+ var lg=document.getElementById('txLag');if(lg&&TXM.period)lg.textContent='Official MOJ bulk data lags ~1-2 quarters behind today.';
  var ds={};TX.forEach(function(t){ds[t[0]]=1;});var s=document.getElementById('txDist');
  Object.keys(ds).sort(function(a,b){return en(a).localeCompare(en(b));}).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=en(n)+'  ·  '+n;s.appendChild(o);});})();
 function txIsLand(t){return t[2]==='R'&&t[6]===1&&t[4]>400;}
 function txRows(){var r=TX.filter(function(t){
   if(txst.use&&t[2]!==txst.use)return false;
+  if(txst.q&&Math.ceil(+t[1].slice(5,7)/3)!==+txst.q)return false;
   if(txst.dist&&t[0]!==txst.dist)return false;
   if(txst.band!=='all'&&band(t[4])!==txst.band)return false;
   if(txst.min>0&&t[5]<txst.min)return false;
@@ -323,6 +328,7 @@ document.getElementById('txBand').onchange=function(){txst.band=this.value;rende
 document.getElementById('txSort').onchange=function(){txst.sort=this.value;renderTx();};
 document.getElementById('txMin').oninput=function(){txst.min=+this.value||0;renderTx();};
 document.getElementById('txLand').onchange=function(){txst.land=this.checked;renderTx();};
+document.getElementById('txQ').onchange=function(){txst.q=this.value;renderTx();};
 
 // ---------- GASTAT INDEX ----------
 var SER=[['resLand','Raw land (residential plot)','#e0b84a'],['villa','Villa','#6ca8ff'],['apt','Apartment','#36c07c'],['comLand','Commercial land','#e8863a'],['agriLand','Agricultural land','#b08cff']];

@@ -106,7 +106,7 @@ if files:
     _UM={'سكني':0,'تجاري':1,'زراعي':2}
     _dd['u']=_dd['cls'].astype(str).str.strip().map(_UM).fillna(3).astype(int)
     _dd['npropi']=pd.to_numeric(_dd['nprop'],errors='coerce').fillna(1).astype(int)
-    _dd=_dd.sort_values('date',ascending=False).head(25000)
+    _dd=_dd.sort_values('date',ascending=False).head(60000)
     # compact: district index + yyyymmdd int + use index (R/C/A/O); template decodes
     TXD=sorted(_dd['d'].unique()); _txdi={d:i for i,d in enumerate(TXD)}
     for _,_r in _dd.iterrows():

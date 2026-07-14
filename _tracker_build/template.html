@@ -245,7 +245,7 @@ function lRows(){var r=lFiltered();if(lst.dist)r=r.filter(function(x){return x[0
 function renderLand(){
  var agg=lAgg();var fdeals=lFiltered();
  var ppms=fdeals.map(function(d){return d[3];}).filter(function(x){return x>0;});var med=ppms.slice().sort(function(a,b){return a-b;})[Math.floor(ppms.length/2)]||0;
- document.getElementById('landSummary').innerHTML='<div>Median plot price <b>'+fmt(med)+'</b> SAR/m²</div><div>Plots <b>'+fdeals.length+'</b></div><div>Districts <b>'+Object.keys(agg).length+'</b></div>';
+ document.getElementById('landSummary').innerHTML='<div>Median plot price <b>'+fmt(med)+'</b> SAR/m²</div><div>Plots <b>'+fdeals.length+'</b></div><div>Districts <b>'+Object.keys(agg).length+'</b></div><div>Newest deal <b>'+((LAND.deals[0]||[])[4]||'—')+'</b> <span style="font-size:11px;color:var(--mut)">(registry publishes with a lag)</span></div>';
  var av=Object.values(agg).map(function(v){return v[0];});var sc=scale(av);var lo=sc[0],hi=sc[1];
  legend('lLo','lBar','lHi',lo,hi);
  var dataMap={};Object.keys(agg).forEach(function(n){var gk=nk(n);if(GEO[gk]){var v=agg[n];dataMap[gk]={v:v[0],name:n,t:tip(n,fmt(v[0])+' SAR/m² median',v[1]+' plot'+(v[1]>1?'s':''))};}});

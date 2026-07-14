@@ -35,11 +35,17 @@ jobs:
       - name: Collect raw-land deals (Suhail)   # runs hourly
         run: python _tracker_build/suhail_collect.py || echo "suhail collect failed; continuing with existing data"
 
-      - name: Decide whether to deploy (once a day 05:00 UTC, or manual)
+      - name: Collect fresh SREM land deals    # near-real-time top-up (Suhail lags/stalls for weeks)
+        run: python _tracker_build/srem_collect.py || echo "srem collect failed; continuing"
+
+      - name: Decide whether to deploy (first run at/after 05:00 UTC each day, or manual)
         id: gate
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$(date -u +%H)" = "05" ] || [ "$(date -u +%H)" = "06" ]; then
+          TODAY=$(date -u +%F); HOUR=$(date -u +%H)
+          LAST=$(cat last_deploy.txt 2>/dev/null || echo none)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || { [ "$LAST" != "$TODAY" ] && [ "$HOUR" -ge 5 ]; }; then
             echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "$TODAY" > last_deploy.txt
           else
             echo "deploy=false" >> "$GITHUB_OUTPUT"
           fi

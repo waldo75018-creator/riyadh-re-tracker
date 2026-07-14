@@ -71,6 +71,16 @@ import csv as _csv, datetime as _dt
 LANDCSV=os.path.join(HERE,'raw_land_deals.csv'); land_deals=[]; land_agg={}
 if os.path.exists(LANDCSV):
     rows=list(_csv.DictReader(open(LANDCSV,encoding='utf-8')))
+    # top-up with near-real-time SREM deals (Suhail lags/stalls); dedup on (date,area,amount)
+    SREMCSV=os.path.join(HERE,'srem_recent.csv')
+    if os.path.exists(SREMCSV):
+        def _k(r):
+            try: return (r['date'],int(float(r['area'])),int(float(r['amount'])))
+            except: return None
+        _seen={_k(r) for r in rows}
+        _add=[r for r in _csv.DictReader(open(SREMCSV,encoding='utf-8')) if _k(r) and _k(r) not in _seen]
+        rows+= _add
+        print('land merge: +%d SREM-only deals over %d suhail'%(len(_add),len(rows)-len(_add)))
     agg={}
     for r in rows:
         try:
